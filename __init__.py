@@ -3,10 +3,10 @@ import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import filedialog as fd
 from tkinter.scrolledtext import ScrolledText as sc
+from tkinter import messagebox as mb
 frameIdMax = 1000
-fontsize = 12
 class MyFrame(tk.Frame):
-    nrows = 3
+    nrows = 4
     ncols = 3
     def __init__ (self, id, xpos, ypos):
         super().__init__(borderwidth=1,highlightbackground="black",highlightthickness=1)
@@ -19,32 +19,45 @@ class MyFrame(tk.Frame):
         self.ypos = ypos
         self.arrows = []
         self.size = self.winfo_width()
+        ft = self.master.ft
+        scale = self.master.fontsize/10
+        self.content = {}
+        # self.config(yscrollcommand = self.master.vscroll.set)
+        # self.config(xscrollcommand = self.master.hscroll.set)
 
         # self.canvas = tk.Canvas(self)
         # self.canvas.pack()
+        self.content['label'     ] = tk.Label(self, text="phrase " + self.id, font=ft)
+        self.content['label'     ].grid(column=1, row=0)
+        self.content['speech_lb' ] = tk.Label(self, text="speech: ", font=ft)
+        self.content['speech_lb' ].grid(column=0, row=1)
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, width=int(10*scale), height=3, font=ft)
+        self.content['speech'    ].grid(column=1, row=1)
+        self.content['orator_lb' ] = tk.Label(self, text="orator: ", font=ft)
+        self.content['orator_lb' ].grid(column=0, row=2)
+        self.content['orator'    ] = tk.Entry(self,width=int(10*scale), font=ft)  
+        self.content['orator'    ].grid(column=1, row=2)
+        self.content['destructor'] = tk.Button(self, font=ft)
+        self.content['destructor']['text'] = 'x'
+        self.content['destructor'].grid(column=0,row=0)
+        self.content['destructor']["command"] = self.remove
 
-        tk.Label(self, text="phrase " + self.id).grid(column=1, row=0)
-        lbl = tk.Label(self, text="speech: ")  
-        lbl.grid(column=0, row=1)
-        # txt = tk.Text(self,width=10, height = 3)  
-        self.speech = sc(self, wrap=tk.WORD, width=10, height=3)
-        self.speech.grid(column=1, row=1)
-        # scroll = tk.Scrollbar(txt)
-        # txt.configure(yscrollcommand=scroll.set)
-        # scroll.grid(column = 2, row = 1)
-        
-        # txt.pack(side=tk.LEFT)
-        # scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        # scroll.grid(column=2, row=1)
-  
-        # scroll.config(command=txt.yview)
-        # scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        lbl = tk.Label(self, text="orator: ")
-        lbl.grid(column=0, row=2)
-        self.orator = tk.Entry(self,width=10)  
-        self.orator.grid(column=1, row=2)
+        self.content['addbutton' ] = tk.Button(self, font=ft)
+        self.content['addbutton' ]['text'] = '+'
 
         # self.create_line
+    def resize(self):
+        if len(self.content) > 0:
+            for key, val in self.content.items():
+                val.configure(font=self.master.ft)
+    def remove(self):
+        if mb.askyesno(title='Warning', message = 'Do you wish to delete phrase '+self.id+'?'):
+            self.master.finalize_dragging()
+            self.master.frames.remove(self)
+            for ar in self.arrows:
+                self.master.canvas.delete(ar)
+            self.master.DrawArrows()
+            self.destroy()
     def get_speech(self):
         return self.speech.get('1.0', tk.END)
     def get_orator(self):
@@ -59,22 +72,35 @@ class App(tk.Tk):
         #setting title
         self.title("undefined")
         #setting window size
-        width=1000
-        height=500
+        self.width=1000
+        self.height=500
         self.frames = []
         self.dragged_widget = None
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
-        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        alignstr = '%dx%d+%d+%d' % (self.width, self.height, (screenwidth - self.width) / 2, (screenheight - self.height) / 2)
         self.geometry(alignstr)
         self.resizable(width=True, height=True)
         self.drawarrows = True
+        self.rowconfigure(0, weight = 1)
+        self.columnconfigure(0, weight = 1)
         # self.attributes("-fullscreen", False)
 
-        self.canvas = tk.Canvas(self, width = width, height=height)
+        self.fontsize = 12
+        self.fontname = 'Calibri'
+
+        self.canvas = tk.Canvas(self, width = screenwidth, height=screenheight, scrollregion =  f"0 0 {screenwidth} {screenheight}")
         self.canvas.height = self.canvas.winfo_reqheight()
         self.canvas.width = self.canvas.winfo_reqwidth()
-        self.canvas.pack()
+        self.canvas.grid(row = 0, column = 0, sticky = tk.NSEW)#pack(side=tk.LEFT, fill = tk.BOTH)
+        # self.makescroll(self, self.canvas )
+        self.makescroll(self,self.canvas)
+
+        # self.vscroll = tk.Scrollbar(self, orient= tk.VERTICAL,command = self.canvas.yview)
+        # self.vscroll.grid(row = 0, column = 1, sticky = tk.NS)#pack(side=tk.RIGHT, fill = tk.Y)
+
+        # self.canvas.configure(yscrollcommand = self.vscroll.set)
+
         self.menu_init()
         self.keybinds()
         
@@ -83,7 +109,7 @@ class App(tk.Tk):
 
         # GButton_457=tk.Button(self)
         # GButton_457["bg"] = "#e9e9ed"
-        ft = tkFont.Font(family='Times',size=fontsize)
+        self.font_init()
         # GButton_457["font"] = ft
         # GButton_457["fg"] = "#000000"
         # GButton_457["justify"] = "center"
@@ -91,14 +117,27 @@ class App(tk.Tk):
         # GButton_457.place(x=170,y=100,width=70,height=25)
         # GButton_457["command"] = self.AddFrame
 
+    def makescroll(self, parent, thing):
+        self.vscroll = tk.Scrollbar(parent, orient = tk.VERTICAL, command = thing.yview)
+        self.vscroll.grid(row = 0, column = 1, sticky = tk.NS)
+        thing.config(yscrollcommand = self.vscroll.set)
+        self.vscroll.bind('<ButtonPress-1>', self.DrawFrames)
+
+        self.hscroll = tk.Scrollbar(parent, orient = tk.HORIZONTAL, command = thing.xview)
+        self.hscroll.grid(row = 1, column = 0, sticky = tk.EW)
+        thing.config(xscrollcommand = self.hscroll.set)
+        self.hscroll.bind('<ButtonPress-1>', self.DrawFrames)
     def menu_init(self):
         self.menubar = tk.Menu()
         self.config(menu=self.menubar)
-        # self.file_menu = tk.Menu(self.menubar)
         self.menubar.add_command(label='save',command=self.save_file)
         self.menubar.add_command(label='load',command=self.open_file, accelerator="Ctrl+O")
         self.menubar.add_command(label='hide/show arrows',command=self.show_arrows)
         self.menubar.add_command(label='new phrase',command=self.AddFrame)
+        self.font_bar = tk.Menu(self.menubar)
+        self.font_bar.add_command(label='+', command=self.font_increase)
+        self.font_bar.add_command(label='-', command=self.font_decrease)
+        self.menubar.add_cascade(label = 'Font', menu=self.font_bar, underline = 0)
         # self.menubar.add_command(label='Exit',command=self.destroy)
     def keybinds (self):
         self.event_add('<<Drag>>', '<B1-Motion>')
@@ -114,6 +153,7 @@ class App(tk.Tk):
         self.bind("<Control-o>", self.open_file)
         self.bind("<Control-S>", self.save_file)
         self.bind("<Control-s>", self.save_file)
+        self.bind('<MouseWheel>', self.OnMouse)
         
 
         # self.canvas.event_add('<<Toggle>>>', '<ButtonPress-1>')
@@ -125,8 +165,13 @@ class App(tk.Tk):
         if event == None:
             return
         else:
-            if event.char == 'a' and event.char == 'A' and event.char == 'Ф' and event.char == 'ф':
+            c=event.char
+            if c == 'a' and c == 'A' and c == 'Ф' and c == 'ф':
                 self.show_arrows()
+            elif c == '-':
+                self.font_decrease()
+            elif c == '+':
+                self.font_increase()
     def show_arrows(self, event=None):
         self.drawarrows=not self.drawarrows
         self.DrawFrames()
@@ -143,12 +188,23 @@ class App(tk.Tk):
         self.canvas.config(width=self.canvas.width, height=self.canvas.height)
         # rescale all the objects tagged with the "all" tag
         self.canvas.scale("all",0,0,wscale,hscale)
-        self.adjust_frame_position()
+        self.adjust_frames_position()
+        self.DrawFrames()
+    def OnMouse(self, event=None):
+        self.hscroll.yview("scroll", event.delta, "units")
+    def font_increase(self,event=None):
+        self.fontsize += 2
+        self.font_init()
+    def font_decrease(self,event=None):
+        if self.fontsize > 2:
+            self.fontsize -= 2
+        self.font_init()
+    def font_init(self, event=None):
+        self.ft = tkFont.Font(family=self.fontname,size=self.fontsize)
         self.DrawFrames()
     def save_file(self, event = None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.asksaveasfilename(filetypes=filetypes)
-
     def open_file(self, event=None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.askopenfilename(filetypes=filetypes)
@@ -184,7 +240,7 @@ class App(tk.Tk):
             # self.winfo
             # x=self.winfo_x()-self.winfo_rootx()
             # y=self.winfo_y()-self.winfo_rooty()
-            self.adjust_frame_position()
+            self.adjust_frames_position()
             # print(f'mouse coordinates: {event.x}, {event.y}\nglobal coordinates: {x}, {y}')
             # x=event.x
             # y=event.y
@@ -192,24 +248,29 @@ class App(tk.Tk):
             self.DrawFrames()
             # self.dragged_widget.place_frame(x,y)
         self.dragged_widget = None
-    def adjust_frame_position(self, event=None):
+    def adjust_frames_position(self, event=None):
         for f in self.frames:
-            x=self.winfo_pointerx()-self.winfo_rootx()
-            y=self.winfo_pointery()-self.winfo_rooty()
+            v = self.vscroll.get()
+            h = self.hscroll.get()
+            x=self.winfo_pointerx()-self.winfo_rootx()+h[0]*self.winfo_screenwidth()
+            y=self.winfo_pointery()-self.winfo_rooty()+v[0]*self.winfo_screenheight()
             x = x - (f.winfo_pointerx()-f.winfo_rootx())
             y = y - (f.winfo_pointery()-f.winfo_rooty())
-            if x<0:x=0
-            if y<0:y=0
-            if x+f.winfo_width() >self.winfo_width() :x=self.winfo_width() -f.winfo_width()
-            if y+f.winfo_height()>self.winfo_height():y=self.winfo_height()-f.winfo_height()
+            # if x<0:x=0
+            # if y<0:y=0
+            # if x+f.winfo_width() >self.winfo_width() :x=self.winfo_width() -f.winfo_width()
+            # if y+f.winfo_height()>self.winfo_height():y=self.winfo_height()-f.winfo_height()
             f.xpos=x
             f.ypos=y
-            
-
-    
-    def DrawFrames(self):
+    def DrawFrames(self, e=None):
         for i, w in enumerate (self.frames):
-            w.place(x=w.xpos, y=w.ypos)
+            v = self.vscroll.get()
+            h = self.hscroll.get()
+            tmp=self.canvas.winfo_x()
+            w.offsetx = h[0]*self.winfo_screenwidth()
+            w.offsety = v[0]*self.winfo_screenheight()
+            w.resize()
+            w.place(x=w.xpos-w.offsetx, y=w.ypos-w.offsety)
         self.DrawArrows()
     def DrawArrows(self):
         for i, w in enumerate (self.frames):
@@ -228,9 +289,6 @@ class App(tk.Tk):
                     w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
 
             # w.grid(row=w.ypos*w.nrows, column=w.xpos*w.ncols, rowspan=w.nrows, columnspan=w.ncols)#, sticky='nsew')
-
-
-
     def AddFrame(self, event = None):
         if event == None:
             xpos=0
@@ -362,3 +420,43 @@ class TestMainApplication(tk.Tk):
 
 
 # TestMainApplication().mainloop()
+
+import tkinter as tk
+from tkinter import filedialog as fido
+
+class BigScreen:
+
+    def __init__( self ):
+        self.root = tk.Tk()
+        self.root.rowconfigure(0, weight = 1)
+        self.root.columnconfigure(0, weight = 1)
+
+        w, h = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+        self.canvas = tk.Canvas(self.root, scrollregion = f"0 0 {w*2} {h*2}")
+        self.canvas.grid(row = 0, column = 0, sticky = tk.NSEW)
+        self.makescroll(self.root, self.canvas )
+
+        self.imagename = fido.askopenfilename( title = "Pick Image to View" )
+        if self.imagename:
+            self.photo = tk.PhotoImage(file = self.imagename).zoom(2, 2)
+            self.window = self.canvas.create_image(
+                ( 0, 0 ), anchor = tk.NW, image = self.photo)
+
+        self.root.bind("<Escape>", self.closer)
+        # self.root.wm_attributes("-fullscreen", 1)
+        # self.root.wm_attributes("-top", 1)
+
+    def makescroll(self, parent, thing):
+        v = tk.Scrollbar(parent, orient = tk.VERTICAL, command = thing.yview)
+        v.grid(row = 0, column = 1, sticky = tk.NS)
+        thing.config(yscrollcommand = v.set)
+        h = tk.Scrollbar(parent, orient = tk.HORIZONTAL, command = thing.xview)
+        h.grid(row = 1, column = 0, sticky = tk.EW)
+        thing.config(xscrollcommand = h.set)
+
+    def closer(self, ev):
+        self.root.destroy()
+
+if __name__ == "____":
+    Big = BigScreen()
+    Big.root.mainloop()
