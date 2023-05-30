@@ -65,9 +65,11 @@ class App(tk.Tk):
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
         self.geometry(alignstr)
         self.resizable(width=True, height=True)
-        self.arrows = []
+        self.drawarrows = True
 
         self.canvas = tk.Canvas(self, width = width, height=height)
+        self.canvas.height = self.canvas.winfo_reqheight()
+        self.canvas.width = self.canvas.winfo_reqwidth()
         self.canvas.pack()
         self.menu_init()
         self.keybinds()
@@ -91,6 +93,7 @@ class App(tk.Tk):
         # self.file_menu = tk.Menu(self.menubar)
         self.menubar.add_command(label='save',command=self.save_file)
         self.menubar.add_command(label='load',command=self.open_file)
+        self.menubar.add_command(label='hide/show arrows',command=self.show_arrows)
         self.menubar.add_command(label='new phrase',command=self.AddFrame)
         # self.menubar.add_command(label='Exit',command=self.destroy)
     def keybinds (self):
@@ -100,10 +103,32 @@ class App(tk.Tk):
         self.bind('<<DragInit>>', self.drag_init)
         self.bind('<<Drag>>', self.drag_widget)
         self.bind('<<DragFinal>>', self.finalize_dragging)
+        self.bind('<Double-Button-1>', self.AddFrame)
+        self.bind("<Configure>", self.resize_canvas)
+        
 
         # self.canvas.event_add('<<Toggle>>>', '<ButtonPress-1>')
         # self.canvas.bind('<<Toggle>>', self.line_pressed)
-        self.canvas.bind('<Double-Button-1>', self.line_pressed)
+        # self.canvas.bind('<Double-Button-1>', self.line_pressed)
+        # self.height = self.winfo_reqheight()
+        # self.width = self.winfo_reqwidth()
+    def show_arrows(self):
+        self.drawarrows=not self.drawarrows
+        self.DrawFrames()
+    def resize_canvas(self,event):
+        # determine the ratio of old width/height to new width/height
+        # print('here')
+        wscale = float(event.width)/self.canvas.width
+        hscale = float(event.height)/self.canvas.height
+        print(f"event {event.width}, {event.height}")
+        print(f"canvas {self.canvas.width}, {self.canvas.height}")
+        self.canvas.width = event.width
+        self.canvas.height = event.height
+        # resize the canvas 
+        self.canvas.config(width=self.canvas.width, height=self.canvas.height)
+        # rescale all the objects tagged with the "all" tag
+        self.canvas.scale("all",0,0,wscale,hscale)
+        self.DrawArrows()
     def save_file(self):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.asksaveasfilename(filetypes=filetypes)
@@ -153,34 +178,40 @@ class App(tk.Tk):
             self.dragged_widget.xpos=x
             self.dragged_widget.ypos=y
             # self.dragged_widget.place(x=x, y=y)
-            self.DrawWidgets()
+            self.DrawFrames()
             # self.dragged_widget.place_frame(x,y)
         self.dragged_widget = None
     
-    def DrawWidgets(self):
-        # for i in range(len(self.widgets)):
-            # self.widgets[i].grid(row=self.widgets[i].ypos, column=self.widgets[i].xpos, rowspan=3, columnspan=3, sticky='nsew')
+    def DrawFrames(self):
+        for i, w in enumerate (self.frames):
+            w.place(x=w.xpos, y=w.ypos)
+        self.DrawArrows()
+    def DrawArrows(self):
         for i, w in enumerate (self.frames):
             for ar in w.arrows:
                 self.canvas.delete(ar)
             w.arrows = []
-            w.place(x=w.xpos, y=w.ypos)
-            if w != self.frames[-1]:
-                # x1 = w.winfo_pointerx()-w.winfo_rootx()#+w.winfo_reqwidth()//4
-                # y1 = w.winfo_pointery()-w.winfo_rooty()+w.winfo_reqheight()
-                x1 = w.xpos+w.winfo_width()//2
-                y1 = w.ypos+w.winfo_height()
-                x2 = self.frames[i+1].winfo_x()+self.frames[i+1].winfo_width()//2
-                y2 = self.frames[i+1].winfo_y()
-                w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
+            if self.drawarrows:
+                if w != self.frames[-1]:
+                    # x1 = w.winfo_pointerx()-w.winfo_rootx()#+w.winfo_reqwidth()//4
+                    # y1 = w.winfo_pointery()-w.winfo_rooty()+w.winfo_reqheight()
+                    x1 = w.xpos+w.winfo_width()//2
+                    y1 = w.ypos+w.winfo_height()
+                    x2 = self.frames[i+1].winfo_x()+self.frames[i+1].winfo_width()//2
+                    y2 = self.frames[i+1].winfo_y()
+                    w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
 
             # w.grid(row=w.ypos*w.nrows, column=w.xpos*w.ncols, rowspan=w.nrows, columnspan=w.ncols)#, sticky='nsew')
 
 
 
-    def AddFrame(self):
-        xpos = 0
-        ypos = 0
+    def AddFrame(self, event = None):
+        if event == None:
+            xpos=0
+            ypos=0
+        else:
+            xpos = event.x
+            ypos = event.y
         # coords = [[],[]]
         # if len(self.frames) != 0:
         #     for w in self.frames:
@@ -207,7 +238,7 @@ class App(tk.Tk):
                 break
 
         self.frames.append(MyFrame(str(frameId), xpos, ypos))
-        self.DrawWidgets()
+        self.DrawFrames()
         # print("command")
 
 
