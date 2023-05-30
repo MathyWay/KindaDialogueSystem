@@ -7,7 +7,11 @@ from tkinter import messagebox as mb
 frameIdMax = 1000
 class Choice:
     def __init__(self, master, font):
-        self.button = tk.Button(master, font)
+        self.button = tk.Button(master, font=font)
+        self.speech = ""
+        self.to = ""
+        self.button.grid(row=3, column=len(master.choices))
+        self.button['text'] = 'choice'
 
 class MyFrame(tk.Frame):
     nrows = 4
@@ -50,12 +54,28 @@ class MyFrame(tk.Frame):
         self.content['addbutton' ]['text'] = '+'
 
         self.choices = []
+        self.addchoice = None
+
+        self.add_choice_button()
 
         # self.create_line
     def resize(self):
         if len(self.content) > 0:
             for key, val in self.content.items():
                 val.configure(font=self.master.ft)
+        self.addchoice.configure(font=self.master.ft)
+        for c in self.choices:
+            c.button.configure(font=self.master.ft)
+    def add_choice_button(self):
+        if self.addchoice != None:
+            self.addchoice.destroy()
+        self.addchoice = tk.Button(self, font=self.master.ft)
+        self.addchoice.grid(column=len(self.choices), row=3)
+        self.addchoice['command'] = self.add_choice
+        self.addchoice['text'] = 'choice +'
+    def add_choice (self):
+        self.choices.append(Choice(self, self.master.ft))
+        self.add_choice_button()
     def remove(self):
         if mb.askyesno(title='Warning', message = "Do you wish to delete 'phrase "+self.id+"'?"):
             self.master.finalize_dragging()
