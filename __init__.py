@@ -5,6 +5,10 @@ from tkinter import filedialog as fd
 from tkinter.scrolledtext import ScrolledText as sc
 from tkinter import messagebox as mb
 frameIdMax = 1000
+class Choice:
+    def __init__(self, master, font):
+        self.button = tk.Button(master, font)
+
 class MyFrame(tk.Frame):
     nrows = 4
     ncols = 3
@@ -31,11 +35,11 @@ class MyFrame(tk.Frame):
         self.content['label'     ].grid(column=1, row=0)
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font=ft)
         self.content['speech_lb' ].grid(column=0, row=1)
-        self.content['speech'    ] = sc(self, wrap=tk.WORD, width=int(10*scale), height=3, font=ft)
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, font=ft, width=10)#int(10*scale))
         self.content['speech'    ].grid(column=1, row=1)
         self.content['orator_lb' ] = tk.Label(self, text="orator: ", font=ft)
         self.content['orator_lb' ].grid(column=0, row=2)
-        self.content['orator'    ] = tk.Entry(self,width=int(10*scale), font=ft)  
+        self.content['orator'    ] = tk.Entry(self, font=ft,width=10)#int(10*scale))  
         self.content['orator'    ].grid(column=1, row=2)
         self.content['destructor'] = tk.Button(self, font=ft)
         self.content['destructor']['text'] = 'x'
@@ -44,6 +48,8 @@ class MyFrame(tk.Frame):
 
         self.content['addbutton' ] = tk.Button(self, font=ft)
         self.content['addbutton' ]['text'] = '+'
+
+        self.choices = []
 
         # self.create_line
     def resize(self):
@@ -153,7 +159,7 @@ class App(tk.Tk):
         self.bind("<Control-o>", self.open_file)
         self.bind("<Control-S>", self.save_file)
         self.bind("<Control-s>", self.save_file)
-        self.bind('<MouseWheel>', self.OnMouse)
+        # self.bind('<MouseWheel>', self.OnMouse)
         
 
         # self.canvas.event_add('<<Toggle>>>', '<ButtonPress-1>')
