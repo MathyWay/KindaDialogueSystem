@@ -12,8 +12,8 @@ class MyFrame(tk.Frame):
         super().__init__(borderwidth=1,highlightbackground="black",highlightthickness=1)
         self.empty = True
         self.id = id
-        self.phrase = ""
-        self.orator = ""
+        # self.phrase = ""
+        # self.orator = ""
         self.choices = []
         self.xpos = xpos
         self.ypos = ypos
@@ -23,29 +23,32 @@ class MyFrame(tk.Frame):
         # self.canvas = tk.Canvas(self)
         # self.canvas.pack()
 
-        tk.Label(self, text=self.id).grid(column=1, row=0)
-        lbl = tk.Label(self, text="phrase: ")  
+        tk.Label(self, text="phrase " + self.id).grid(column=1, row=0)
+        lbl = tk.Label(self, text="speech: ")  
         lbl.grid(column=0, row=1)
         # txt = tk.Text(self,width=10, height = 3)  
-        txt = sc(self, wrap=tk.WORD, width=10, height=3)
+        self.speech = sc(self, wrap=tk.WORD, width=10, height=3)
+        self.speech.grid(column=1, row=1)
         # scroll = tk.Scrollbar(txt)
         # txt.configure(yscrollcommand=scroll.set)
         # scroll.grid(column = 2, row = 1)
         
         # txt.pack(side=tk.LEFT)
         # scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        txt.grid(column=1, row=1)
         # scroll.grid(column=2, row=1)
   
         # scroll.config(command=txt.yview)
         # scroll.pack(side=tk.RIGHT, fill=tk.Y)
         lbl = tk.Label(self, text="orator: ")
         lbl.grid(column=0, row=2)
-        txt = tk.Entry(self,width=10)  
-        txt.grid(column=1, row=2)
+        self.orator = tk.Entry(self,width=10)  
+        self.orator.grid(column=1, row=2)
 
         # self.create_line
-
+    def get_speech(self):
+        return self.speech.get('1.0', tk.END)
+    def get_orator(self):
+        return self.orator.get()
     def place_frame(self, x, y):
         tmp = self.location(x,y)
         self.xpos = tmp[0]
