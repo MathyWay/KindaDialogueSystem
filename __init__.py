@@ -66,6 +66,7 @@ class App(tk.Tk):
         self.geometry(alignstr)
         self.resizable(width=True, height=True)
         self.drawarrows = True
+        # self.attributes("-fullscreen", False)
 
         self.canvas = tk.Canvas(self, width = width, height=height)
         self.canvas.height = self.canvas.winfo_reqheight()
@@ -92,7 +93,7 @@ class App(tk.Tk):
         self.config(menu=self.menubar)
         # self.file_menu = tk.Menu(self.menubar)
         self.menubar.add_command(label='save',command=self.save_file)
-        self.menubar.add_command(label='load',command=self.open_file)
+        self.menubar.add_command(label='load',command=self.open_file, accelerator="Ctrl+O")
         self.menubar.add_command(label='hide/show arrows',command=self.show_arrows)
         self.menubar.add_command(label='new phrase',command=self.AddFrame)
         # self.menubar.add_command(label='Exit',command=self.destroy)
@@ -104,7 +105,12 @@ class App(tk.Tk):
         self.bind('<<Drag>>', self.drag_widget)
         self.bind('<<DragFinal>>', self.finalize_dragging)
         self.bind('<Double-Button-1>', self.AddFrame)
-        self.bind("<Configure>", self.resize_canvas)
+        self.canvas.bind("<Configure>", self.resize_canvas)
+        self.bind("<Key>", self.shortcuts)
+        self.bind("<Control-O>", self.open_file)
+        self.bind("<Control-o>", self.open_file)
+        self.bind("<Control-S>", self.save_file)
+        self.bind("<Control-s>", self.save_file)
         
 
         # self.canvas.event_add('<<Toggle>>>', '<ButtonPress-1>')
@@ -112,7 +118,13 @@ class App(tk.Tk):
         # self.canvas.bind('<Double-Button-1>', self.line_pressed)
         # self.height = self.winfo_reqheight()
         # self.width = self.winfo_reqwidth()
-    def show_arrows(self):
+    def shortcuts(self, event = None):
+        if event == None:
+            return
+        else:
+            if event.char == 'a' and event.char == 'A' and event.char == 'Ф' and event.char == 'ф':
+                self.show_arrows()
+    def show_arrows(self, event=None):
         self.drawarrows=not self.drawarrows
         self.DrawFrames()
     def resize_canvas(self,event):
@@ -120,20 +132,21 @@ class App(tk.Tk):
         # print('here')
         wscale = float(event.width)/self.canvas.width
         hscale = float(event.height)/self.canvas.height
-        print(f"event {event.width}, {event.height}")
-        print(f"canvas {self.canvas.width}, {self.canvas.height}")
+        # print(f"event {event.width}, {event.height}")
+        # print(f"canvas {self.canvas.width}, {self.canvas.height}")
         self.canvas.width = event.width
         self.canvas.height = event.height
         # resize the canvas 
         self.canvas.config(width=self.canvas.width, height=self.canvas.height)
         # rescale all the objects tagged with the "all" tag
         self.canvas.scale("all",0,0,wscale,hscale)
-        self.DrawArrows()
-    def save_file(self):
+        self.adjust_frame_position()
+        self.DrawFrames()
+    def save_file(self, event = None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.asksaveasfilename(filetypes=filetypes)
 
-    def open_file(self):
+    def open_file(self, event=None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.askopenfilename(filetypes=filetypes)
     def line_pressed(self, e):
@@ -162,25 +175,34 @@ class App(tk.Tk):
             #update the marked for next iteration
             self.marked_pointx = self.winfo_pointerx()
             self.marked_pointy = self.winfo_pointery()
-    def finalize_dragging(self, event):
+    def finalize_dragging(self, event=None):
         #default setup
         if isinstance (self.dragged_widget, MyFrame):
             # self.winfo
             # x=self.winfo_x()-self.winfo_rootx()
             # y=self.winfo_y()-self.winfo_rooty()
-            x=self.winfo_pointerx()-self.winfo_rootx()
-            y=self.winfo_pointery()-self.winfo_rooty()
-            x = x - (self.dragged_widget.winfo_pointerx()-self.dragged_widget.winfo_rootx())
-            y = y - (self.dragged_widget.winfo_pointery()-self.dragged_widget.winfo_rooty())
+            self.adjust_frame_position()
             # print(f'mouse coordinates: {event.x}, {event.y}\nglobal coordinates: {x}, {y}')
             # x=event.x
             # y=event.y
-            self.dragged_widget.xpos=x
-            self.dragged_widget.ypos=y
             # self.dragged_widget.place(x=x, y=y)
             self.DrawFrames()
             # self.dragged_widget.place_frame(x,y)
         self.dragged_widget = None
+    def adjust_frame_position(self, event=None):
+        for f in self.frames:
+            x=self.winfo_pointerx()-self.winfo_rootx()
+            y=self.winfo_pointery()-self.winfo_rooty()
+            x = x - (f.winfo_pointerx()-f.winfo_rootx())
+            y = y - (f.winfo_pointery()-f.winfo_rooty())
+            if x<0:x=0
+            if y<0:y=0
+            if x+f.winfo_width() >self.winfo_width() :x=self.winfo_width() -f.winfo_width()
+            if y+f.winfo_height()>self.winfo_height():y=self.winfo_height()-f.winfo_height()
+            f.xpos=x
+            f.ypos=y
+            
+
     
     def DrawFrames(self):
         for i, w in enumerate (self.frames):
@@ -193,12 +215,13 @@ class App(tk.Tk):
             w.arrows = []
             if self.drawarrows:
                 if w != self.frames[-1]:
+                    w1 = self.frames[i+1]
                     # x1 = w.winfo_pointerx()-w.winfo_rootx()#+w.winfo_reqwidth()//4
                     # y1 = w.winfo_pointery()-w.winfo_rooty()+w.winfo_reqheight()
                     x1 = w.xpos+w.winfo_width()//2
                     y1 = w.ypos+w.winfo_height()
-                    x2 = self.frames[i+1].winfo_x()+self.frames[i+1].winfo_width()//2
-                    y2 = self.frames[i+1].winfo_y()
+                    x2 = w1.xpos+w1.winfo_width()//2
+                    y2 = w1.ypos
                     w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
 
             # w.grid(row=w.ypos*w.nrows, column=w.xpos*w.ncols, rowspan=w.nrows, columnspan=w.ncols)#, sticky='nsew')
