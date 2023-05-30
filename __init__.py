@@ -57,7 +57,7 @@ class MyFrame(tk.Frame):
             for key, val in self.content.items():
                 val.configure(font=self.master.ft)
     def remove(self):
-        if mb.askyesno(title='Warning', message = 'Do you wish to delete phrase '+self.id+'?'):
+        if mb.askyesno(title='Warning', message = "Do you wish to delete 'phrase "+self.id+"'?"):
             self.master.finalize_dragging()
             self.master.frames.remove(self)
             for ar in self.arrows:
@@ -262,8 +262,8 @@ class App(tk.Tk):
             y=self.winfo_pointery()-self.winfo_rooty()+v[0]*self.winfo_screenheight()
             x = x - (f.winfo_pointerx()-f.winfo_rootx())
             y = y - (f.winfo_pointery()-f.winfo_rooty())
-            # if x<0:x=0
-            # if y<0:y=0
+            if x<0:x=0
+            if y<0:y=0
             # if x+f.winfo_width() >self.winfo_width() :x=self.winfo_width() -f.winfo_width()
             # if y+f.winfo_height()>self.winfo_height():y=self.winfo_height()-f.winfo_height()
             f.xpos=x
@@ -272,12 +272,13 @@ class App(tk.Tk):
         for i, w in enumerate (self.frames):
             v = self.vscroll.get()
             h = self.hscroll.get()
-            tmp=self.canvas.winfo_x()
             w.offsetx = h[0]*self.winfo_screenwidth()
             w.offsety = v[0]*self.winfo_screenheight()
             w.resize()
             w.place(x=w.xpos-w.offsetx, y=w.ypos-w.offsety)
         self.DrawArrows()
+        self.hscroll.lift()
+        self.vscroll.lift()
     def DrawArrows(self):
         for i, w in enumerate (self.frames):
             for ar in w.arrows:
@@ -293,6 +294,7 @@ class App(tk.Tk):
                     x2 = w1.xpos+w1.winfo_width()//2
                     y2 = w1.ypos
                     w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
+                    # self.canvas.lift(w.arrows[-1])
 
             # w.grid(row=w.ypos*w.nrows, column=w.xpos*w.ncols, rowspan=w.nrows, columnspan=w.ncols)#, sticky='nsew')
     def AddFrame(self, event = None):
@@ -300,8 +302,12 @@ class App(tk.Tk):
             xpos=0
             ypos=0
         else:
-            xpos = event.x
-            ypos = event.y
+            v = self.vscroll.get()
+            h = self.hscroll.get()
+            offsetx = h[0]*self.winfo_screenwidth()
+            offsety = v[0]*self.winfo_screenheight()
+            xpos = event.x+offsetx
+            ypos = event.y+offsety
         # coords = [[],[]]
         # if len(self.frames) != 0:
         #     for w in self.frames:
