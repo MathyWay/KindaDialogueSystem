@@ -12,14 +12,14 @@ class States (Enum):
 class ChoiceFrame(tk.Toplevel):
     def __init__(self, master):
         super().__init__()#borderwidth=1,highlightbackground="black",highlightthickness=1)
-        self.title(master.id.get())
+        self.title(master.strvars['id'].get())
         ft=master.ft
         self.content = {}
         self.content['label'     ] = tk.Label(self, text="phrase ", font = ft)
         self.content['label'     ].grid(column=1, row=1)
         self.content['id_lb'     ] = tk.Label(self, text="id: ", font = ft)
         self.content['id_lb'     ].grid(column=0, row=2)
-        self.content['id'        ] = tk.Entry(self,width=10, textvariable=master.id, font = ft)#int(10*scale))  
+        self.content['id'        ] = tk.Entry(self,width=10, textvariable=master.strvars['id'], font = ft)#int(10*scale))  
         self.content['id'        ].grid(column=1, row=2)
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font = ft)
         self.content['speech_lb' ].grid(column=0, row=3)
@@ -27,12 +27,12 @@ class ChoiceFrame(tk.Toplevel):
         self.content['speech'    ].grid(column=1, row=3)
         self.content['to_lb'     ] = tk.Label(self, text="to: ", font = ft)
         self.content['to_lb'     ].grid(column=0, row=4)
-        self.content['to'        ] = tk.Entry(self,width=10, textvariable=master.to, font = ft)#int(10*scale))  
+        self.content['to'        ] = tk.Entry(self,width=10, textvariable=master.strvars['to'], font = ft)#int(10*scale))  
         self.content['to'        ].grid(column=1, row=4)
 
-        self.apply = tk.Button(self, font=ft)
-        self.apply.grid(column=0, row=5)
-        self.apply['text']='apply'
+        # self.apply = tk.Button(self, font=ft)
+        # self.apply.grid(column=0, row=5)
+        # self.apply['text']='apply'
 
         self.ok = tk.Button(self, font=ft)
         self.ok.grid(column=1, row=5)
@@ -41,13 +41,15 @@ class ChoiceFrame(tk.Toplevel):
 class Choice:
     def __init__(self, master, ft):
         self.button = tk.Button(master, font=ft)
-        self.id=tk.StringVar()
-        self.id.set('...')
+        self.master=master
         self.ft=ft
+        self.strvars={}
+        self.strvars['id']=tk.StringVar()
+        self.strvars['id'].set('...')
         # self.speech = tk.StringVar()
-        self.to = tk.StringVar()
+        self.strvars['to'] = tk.StringVar()
         self.button.grid(row=3, column=len(master.choices))
-        self.button['text'] = self.id.get()
+        self.button['text'] = self.strvars['id'].get()
         self.button['command'] = self.open_frame
         # master.master = States.Choice
 
@@ -55,6 +57,14 @@ class Choice:
     def open_frame(self):
         self.frame = ChoiceFrame(self)
     def close_frame(self):
+        # self.save_frame()
+        self.button['text'] = self.strvars['id'].get()
+        self.master.master.DrawArrows()
+        self.frame.destroy()
+    # def save_frame(self):
+    #     pass
+
+
         self.frame.destroy()
 
 class MyFrame(tk.Frame):
@@ -353,15 +363,28 @@ class App(tk.Tk):
                 self.canvas.delete(ar)
             w.arrows = []
             if self.drawarrows:
-                if w != self.frames[-1]:
-                    w1 = self.frames[i+1]
-                    # x1 = w.winfo_pointerx()-w.winfo_rootx()#+w.winfo_reqwidth()//4
-                    # y1 = w.winfo_pointery()-w.winfo_rooty()+w.winfo_reqheight()
-                    x1 = w.xpos+w.winfo_width()//2
-                    y1 = w.ypos+w.winfo_height()
-                    x2 = w1.xpos+w1.winfo_width()//2
-                    y2 = w1.ypos
-                    w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
+                for ch in w.choices:
+                    tostr = ch.strvars['to'].get()
+                    to=None
+                    for w1 in self.frames:
+                        if w1.id==tostr:
+                            to=w1
+                            break
+                    if to == None:
+                        mb.showwarning(f'Error! The choice {tostr} of the phrase {w.id} refers to non-existing phrase!')
+                    elif to == w:
+                        mb.showwarning(f'Error! The choice {tostr} of the phrase {w.id} refers to itself!')
+                        continue
+                        
+                # if w != self.frames[-1]:
+                #     w1 = self.frames[i+1]
+                #     # x1 = w.winfo_pointerx()-w.winfo_rootx()#+w.winfo_reqwidth()//4
+                #     # y1 = w.winfo_pointery()-w.winfo_rooty()+w.winfo_reqheight()
+                #     x1 = w.xpos+w.winfo_width()//2
+                #     y1 = w.ypos+w.winfo_height()
+                #     x2 = w1.xpos+w1.winfo_width()//2
+                #     y2 = w1.ypos
+                #     w.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
                     # self.canvas.lift(w.arrows[-1])
 
             # w.grid(row=w.ypos*w.nrows, column=w.xpos*w.ncols, rowspan=w.nrows, columnspan=w.ncols)#, sticky='nsew')
