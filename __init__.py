@@ -1,10 +1,14 @@
 import tkinter as tk
+from enum import Enum
 # from tkinter import tix
 import tkinter.font as tkFont
 from tkinter import filedialog as fd
 from tkinter.scrolledtext import ScrolledText as sc
 from tkinter import messagebox as mb
 frameIdMax = 1000
+class States (Enum):
+    Empty=0
+    Choice=1
 class Choice:
     def __init__(self, master, font):
         self.button = tk.Button(master, font=font)
@@ -12,6 +16,7 @@ class Choice:
         self.to = ""
         self.button.grid(row=3, column=len(master.choices))
         self.button['text'] = 'choice'
+        # master.master = States.Choice
 
 class MyFrame(tk.Frame):
     nrows = 4
@@ -101,6 +106,7 @@ class App(tk.Tk):
         self.width=1000
         self.height=500
         self.frames = []
+        self.state = States.Empty
         self.dragged_widget = None
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
