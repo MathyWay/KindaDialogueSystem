@@ -9,14 +9,53 @@ frameIdMax = 1000
 class States (Enum):
     Empty=0
     Choice=1
+class ChoiceFrame(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__()#borderwidth=1,highlightbackground="black",highlightthickness=1)
+        self.title(master.id.get())
+        ft=master.ft
+        self.content = {}
+        self.content['label'     ] = tk.Label(self, text="phrase ", font = ft)
+        self.content['label'     ].grid(column=1, row=1)
+        self.content['id_lb'     ] = tk.Label(self, text="id: ", font = ft)
+        self.content['id_lb'     ].grid(column=0, row=2)
+        self.content['id'        ] = tk.Entry(self,width=10, textvariable=master.id, font = ft)#int(10*scale))  
+        self.content['id'        ].grid(column=1, row=2)
+        self.content['speech_lb' ] = tk.Label(self, text="speech: ", font = ft)
+        self.content['speech_lb' ].grid(column=0, row=3)
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, width=10, font = ft)#int(10*scale))
+        self.content['speech'    ].grid(column=1, row=3)
+        self.content['to_lb'     ] = tk.Label(self, text="to: ", font = ft)
+        self.content['to_lb'     ].grid(column=0, row=4)
+        self.content['to'        ] = tk.Entry(self,width=10, textvariable=master.to, font = ft)#int(10*scale))  
+        self.content['to'        ].grid(column=1, row=4)
+
+        self.apply = tk.Button(self, font=ft)
+        self.apply.grid(column=0, row=5)
+        self.apply['text']='apply'
+
+        self.ok = tk.Button(self, font=ft)
+        self.ok.grid(column=1, row=5)
+        self.ok['text']='ok'
+        self.ok['command']=master.close_frame
 class Choice:
-    def __init__(self, master, font):
-        self.button = tk.Button(master, font=font)
-        self.speech = ""
-        self.to = ""
+    def __init__(self, master, ft):
+        self.button = tk.Button(master, font=ft)
+        self.id=tk.StringVar()
+        self.id.set('...')
+        self.ft=ft
+        # self.speech = tk.StringVar()
+        self.to = tk.StringVar()
         self.button.grid(row=3, column=len(master.choices))
-        self.button['text'] = 'choice'
+        self.button['text'] = self.id.get()
+        self.button['command'] = self.open_frame
         # master.master = States.Choice
+
+        self.open_frame()
+    def open_frame(self):
+        self.frame = ChoiceFrame(self)
+    def close_frame(self):
+        self.frame.destroy()
 
 class MyFrame(tk.Frame):
     nrows = 4
@@ -35,6 +74,9 @@ class MyFrame(tk.Frame):
         ft = self.master.ft
         scale = self.master.fontsize/10
         self.content = {}
+        self.stringvars = {}
+        # self.stringvars['speech'    ]=tk.StringVar
+        self.stringvars['orator'    ]=tk.StringVar
         # self.config(yscrollcommand = self.master.vscroll.set)
         # self.config(xscrollcommand = self.master.hscroll.set)
 
@@ -44,11 +86,11 @@ class MyFrame(tk.Frame):
         self.content['label'     ].grid(column=1, row=0)
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font=ft)
         self.content['speech_lb' ].grid(column=0, row=1)
-        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, font=ft, width=10)#int(10*scale))
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, font=ft, width=10,)#int(10*scale))
         self.content['speech'    ].grid(column=1, row=1)
         self.content['orator_lb' ] = tk.Label(self, text="orator: ", font=ft)
         self.content['orator_lb' ].grid(column=0, row=2)
-        self.content['orator'    ] = tk.Entry(self, font=ft,width=10)#int(10*scale))  
+        self.content['orator'    ] = tk.Entry(self, font=ft,width=10,textvariable=self.stringvars['orator'])#int(10*scale))  
         self.content['orator'    ].grid(column=1, row=2)
         self.content['destructor'] = tk.Button(self, font=ft)
         self.content['destructor']['text'] = 'x'
