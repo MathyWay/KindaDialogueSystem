@@ -6,6 +6,7 @@ from tkinter import filedialog as fd
 from tkinter.scrolledtext import ScrolledText as sc
 from tkinter import messagebox as mb
 frameIdMax = 1000
+EntryWidth = 20
 class States (Enum):
     Empty=0
     Choice=1
@@ -15,34 +16,43 @@ class ChoiceFrame(tk.Toplevel):
         self.title(master.strvars['id'].get())
         ft=master.ft
         self.content = {}
-        self.content['label'     ] = tk.Label(self, text="phrase ", font = ft)
+        self.content['label'     ] = tk.Label(self, text="phrase "+master.master.id, font = ft)
         self.content['label'     ].grid(column=1, row=1)
-        self.content['id_lb'     ] = tk.Label(self, text="id: ", font = ft)
+        self.content['id_lb'     ] = tk.Label(self, text="name: ", font = ft)
         self.content['id_lb'     ].grid(column=0, row=2)
-        self.content['id'        ] = tk.Entry(self,width=10, textvariable=master.strvars['id'], font = ft)#int(10*scale))  
+        self.content['id'        ] = tk.Entry(self,width=EntryWidth, textvariable=master.strvars['id'], font = ft)#int(10*scale))  
         self.content['id'        ].grid(column=1, row=2)
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font = ft)
         self.content['speech_lb' ].grid(column=0, row=3)
-        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, width=10, font = ft)#int(10*scale))
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, width=EntryWidth, font = ft)#int(10*scale))
+        self.content['speech'    ].insert(tk.INSERT,master.speech)
         self.content['speech'    ].grid(column=1, row=3)
         self.content['to_lb'     ] = tk.Label(self, text="to: ", font = ft)
         self.content['to_lb'     ].grid(column=0, row=4)
-        self.content['to'        ] = tk.Entry(self,width=10, textvariable=master.strvars['to'], font = ft)#int(10*scale))  
+        self.content['to'        ] = tk.Entry(self,width=EntryWidth, textvariable=master.strvars['to'], font = ft)#int(10*scale))  
         self.content['to'        ].grid(column=1, row=4)
 
         # self.apply = tk.Button(self, font=ft)
         # self.apply.grid(column=0, row=5)
         # self.apply['text']='apply'
+        self.remove = tk.Button(self, font=ft)
+        self.remove.grid(column=0, row=5)
+        self.remove['text']='-'
+        self.remove['command']=master.remove
 
         self.ok = tk.Button(self, font=ft)
         self.ok.grid(column=1, row=5)
         self.ok['text']='ok'
-        self.ok['command']=master.close_frame
+        self.ok['command']=master.check_and_close
+        
+        self.protocol("WM_DELETE_WINDOW", master.close_frame)
 class Choice:
     def __init__(self, master, ft):
         self.button = tk.Button(master, font=ft)
         self.master=master
         self.ft=ft
+        self.frame=None
+        self.speech = ""
         self.strvars={}
         self.strvars['id']=tk.StringVar()
         self.strvars['id'].set('...')
@@ -55,12 +65,41 @@ class Choice:
 
         self.open_frame()
     def open_frame(self):
-        self.frame = ChoiceFrame(self)
+        if self.frame == None:
+            self.frame = ChoiceFrame(self)
+    def check_and_close(self):
+        self.check_choice()
+        self.close_frame()
     def close_frame(self):
         # self.save_frame()
+        # self.check_choice()
         self.button['text'] = self.strvars['id'].get()
         self.master.master.DrawArrows()
         self.frame.destroy()
+        self.frame = None
+    def remove(self):
+        if mb.askyesno('Warning', 'Are you sure to delete this choice?'):
+            self.close_frame()
+            self.button.destroy()
+            self.master.choices.remove(self)
+            self.master.master.DrawFrames()
+    def check_choice(self):
+        self.speech = self.frame.content['speech'].get("1.0", tk.END)
+        tostr = self.strvars['to'].get()
+        to=None
+        for w1 in self.master.master.frames:
+            if w1.id==tostr:
+                to=w1
+                break
+        if to == None:
+            mb.showwarning('Error!', f'The choice {tostr} of the phrase {self.master.id} refers to non-existing phrase!')
+            return -1
+            # continue
+        elif to == self.master:
+            mb.showwarning('Error!', f'The choice {tostr} of the phrase {self.master.id} refers to itself!')
+            return -2
+            # continue
+        return 0
     # def save_frame(self):
     #     pass
 
@@ -82,7 +121,7 @@ class MyFrame(tk.Frame):
         self.arrows = []
         self.size = self.winfo_width()
         ft = self.master.ft
-        scale = self.master.fontsize/10
+        self.scale = 1#self.master.fontsize/10
         self.content = {}
         self.stringvars = {}
         # self.stringvars['speech'    ]=tk.StringVar
@@ -96,11 +135,11 @@ class MyFrame(tk.Frame):
         self.content['label'     ].grid(column=1, row=0)
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font=ft)
         self.content['speech_lb' ].grid(column=0, row=1)
-        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, font=ft, width=10,)#int(10*scale))
+        self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, font=ft, width=EntryWidth,)#int(10*scale))
         self.content['speech'    ].grid(column=1, row=1)
         self.content['orator_lb' ] = tk.Label(self, text="orator: ", font=ft)
         self.content['orator_lb' ].grid(column=0, row=2)
-        self.content['orator'    ] = tk.Entry(self, font=ft,width=10,textvariable=self.stringvars['orator'])#int(10*scale))  
+        self.content['orator'    ] = tk.Entry(self, font=ft,width=EntryWidth,textvariable=self.stringvars['orator'])#int(10*scale))  
         self.content['orator'    ].grid(column=1, row=2)
         self.content['destructor'] = tk.Button(self, font=ft)
         self.content['destructor']['text'] = 'x'
@@ -110,7 +149,7 @@ class MyFrame(tk.Frame):
         self.content['addbutton' ] = tk.Button(self, font=ft)
         self.content['addbutton' ]['text'] = '+'
 
-        self.choices = []
+        self.choices:tk.Button = []
         self.addchoice = None
 
         self.add_choice_button()
@@ -123,6 +162,17 @@ class MyFrame(tk.Frame):
         self.addchoice.configure(font=self.master.ft)
         for c in self.choices:
             c.button.configure(font=self.master.ft)
+        self.redraw_choices()
+        self.add_choice_button()
+        mousex=self.master.winfo_pointerx()-self.master.winfo_rootx()
+        mousey=self.master.winfo_pointery()-self.master.winfo_rooty()
+        self.xpos=self.xpos*self.scale
+        self.ypos=self.ypos*self.scale
+        # self.xpos = (mousex-self.xpos)*(self.scale-1)+self.xpos
+        # self.ypos = (mousey-self.ypos)*(self.scale-1)+self.ypos
+    def redraw_choices(self):
+        for i,ch in enumerate(self.choices):
+            ch.button.grid(row=3, column=i)
     def add_choice_button(self):
         if self.addchoice != None:
             self.addchoice.destroy()
@@ -194,12 +244,17 @@ class App(tk.Tk):
         # GButton_457=tk.Button(self)
         # GButton_457["bg"] = "#e9e9ed"
         self.font_init()
+        
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # GButton_457["font"] = ft
         # GButton_457["fg"] = "#000000"
         # GButton_457["justify"] = "center"
         # GButton_457["text"] = "Button"
         # GButton_457.place(x=170,y=100,width=70,height=25)
         # GButton_457["command"] = self.AddFrame
+    def on_closing(self):
+        if mb.askokcancel("Quit", "Do you want to quit?"):
+            self.destroy()
 
     def makescroll(self, parent, thing):
         self.vscroll = tk.Scrollbar(parent, orient = tk.VERTICAL, command = thing.yview)
@@ -218,10 +273,14 @@ class App(tk.Tk):
         self.menubar.add_command(label='load',command=self.open_file, accelerator="Ctrl+O")
         self.menubar.add_command(label='hide/show arrows',command=self.show_arrows)
         self.menubar.add_command(label='new phrase',command=self.AddFrame)
+
         self.font_bar = tk.Menu(self.menubar)
         self.font_bar.add_command(label='+', command=self.font_increase)
         self.font_bar.add_command(label='-', command=self.font_decrease)
         self.menubar.add_cascade(label = 'Font', menu=self.font_bar, underline = 0)
+        # self.font_bar.add_cascade(label='Fonts...', menu=self.fonts_choice_bar)
+
+        # self.fonts_choice_bar = tk.Menu(self.font_bar)
         # self.menubar.add_command(label='Exit',command=self.destroy)
     def keybinds (self):
         self.event_add('<<Drag>>', '<B1-Motion>')
@@ -253,21 +312,45 @@ class App(tk.Tk):
             if c == 'a' and c == 'A' and c == 'Ф' and c == 'ф':
                 self.show_arrows()
             elif c == '-':
+                fsize=self.fontsize
                 self.font_decrease()
+                scale=float(self.fontsize)/float(fsize)
+                for f in self.frames:
+                    f.scale=scale
+                    f.resize()
+                    f.scale=1
+                # self.resize_canvas(scale=scale)
+                self.DrawFrames()
             elif c == '+':
+                fsize=self.fontsize
                 self.font_increase()
+                scale=float(self.fontsize)/float(fsize)
+                for f in self.frames:
+                    f.scale=scale
+                    f.resize()
+                    f.scale=1
+                # self.resize_canvas(scale=scale)
+                self.DrawFrames()
+    def font_choice(self):
+        pass
     def show_arrows(self, event=None):
         self.drawarrows=not self.drawarrows
         self.DrawFrames()
-    def resize_canvas(self,event):
+    def resize_canvas(self,event=None, scale=1):
         # determine the ratio of old width/height to new width/height
         # print('here')
-        wscale = float(event.width)/self.canvas.width
-        hscale = float(event.height)/self.canvas.height
+        if event == None:
+            wscale=scale
+            hscale=scale
+            self.canvas.width = self.canvas.winfo_width ()*scale
+            self.canvas.height= self.canvas.winfo_height()*scale
+        else:
+            wscale = float(event.width)/self.canvas. winfo_width()
+            hscale = float(event.height)/self.canvas.winfo_height()
         # print(f"event {event.width}, {event.height}")
         # print(f"canvas {self.canvas.width}, {self.canvas.height}")
-        self.canvas.width = event.width
-        self.canvas.height = event.height
+            self.canvas.width = event.width
+            self.canvas.height = event.height
         # resize the canvas 
         self.canvas.config(width=self.canvas.width, height=self.canvas.height)
         # rescale all the objects tagged with the "all" tag
@@ -295,18 +378,21 @@ class App(tk.Tk):
     def line_pressed(self, e):
         print("click")
     def drag_init(self, event):
-        wid_drag = event.widget.master 
-        if wid_drag is not self:
+        wid_drag = None
+        if isinstance (event.widget.master, MyFrame):
+            wid_drag = event.widget.master
+        elif isinstance (event.widget, MyFrame):
+            wid_drag = event.widget
+        if wid_drag != None:
             #store the widget that is clicked
             self.dragged_widget = wid_drag
             #ensure dragged widget is ontop
-            if isinstance (wid_drag, MyFrame):
-                wid_drag.lift()
-                #store the currently mouse position
-                self.marked_pointx = self.winfo_pointerx()
-                self.marked_pointy = self.winfo_pointery()
-            else:
-                self.finalize_dragging(event)
+            wid_drag.lift()
+            #store the currently mouse position
+            self.marked_pointx = self.winfo_pointerx()
+            self.marked_pointy = self.winfo_pointery()
+        else:
+            self.finalize_dragging(event)
     def drag_widget(self, event):
         if (w:=self.dragged_widget): #walrus assignment
             cx,cy = w.winfo_x(), w.winfo_y() #current x and y
@@ -363,7 +449,7 @@ class App(tk.Tk):
                 self.canvas.delete(ar)
             w.arrows = []
             if self.drawarrows:
-                for ch in w.choices:
+                for j,ch in enumerate(w.choices):
                     tostr = ch.strvars['to'].get()
                     to=None
                     for w1 in self.frames:
@@ -371,10 +457,24 @@ class App(tk.Tk):
                             to=w1
                             break
                     if to == None:
-                        mb.showwarning(f'Error! The choice {tostr} of the phrase {w.id} refers to non-existing phrase!')
-                    elif to == w:
-                        mb.showwarning(f'Error! The choice {tostr} of the phrase {w.id} refers to itself!')
+                        # mb.showwarning('Error!', f'The choice {tostr} of the phrase {w.id} refers to non-existing phrase!')
                         continue
+                    elif to == w:
+                        # mb.showwarning('Error!', f'The choice {tostr} of the phrase {w.id} refers to itself!')
+                        continue
+                    else:
+                        self.DrawArrow(w,j,to)
+    def DrawArrow(self,w1:MyFrame,Choice:int,w2:MyFrame):
+        button = w1.choices[Choice].button
+        # x1 = w1.xpos+w1.winfo_width()//2
+        # y1 = w1.ypos+w1.winfo_height()
+        x1 = w1.xpos+button.winfo_x()+button.winfo_width()//2
+        y1 = w1.ypos+button.winfo_y()+button.winfo_height()
+        x2 = w2.xpos+w2.winfo_width()//2
+        y2 = w2.ypos
+        # w2.winfo_
+        w1.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
+
                         
                 # if w != self.frames[-1]:
                 #     w1 = self.frames[i+1]
