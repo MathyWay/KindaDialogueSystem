@@ -96,14 +96,15 @@ class Choice:
         data = {}
         # data.update(self.strvars)
         data['strvars'] = {}
+        data['ScrolledText'] = {}
+        data['str'] = {}
+
         for k, v in self.strvars.items():
             if isinstance(v, tk.StringVar):
                 data['strvars'][k] = v.get()
-        data['ScrolledText'] = {}
-        for k, v in self.strvars.items():
             if isinstance(v, sc):
                 data['ScrolledText'][k] = v.get("1.0", tk.END)
-        data['str'] = {}
+
         for k, v in self.str.items():
             if isinstance(v, str):
                 data['str'][k] = v
