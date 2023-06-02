@@ -141,8 +141,9 @@ class MyFrame(tk.Frame):
         self.content['orator_lb' ].grid(column=0, row=2)
         self.content['orator'    ] = tk.Entry(self, font=ft,width=EntryWidth,textvariable=self.stringvars['orator'])#int(10*scale))  
         self.content['orator'    ].grid(column=1, row=2)
-        self.content['destructor'] = tk.Button(self, font=ft)
-        self.content['destructor']['text'] = 'x'
+        self.content['destructor'] = tk.Button(self,font=ft,text='⨷')
+        # self.content['destructor'].img=tk.PhotoImage(file='close.png',width=20,height=20)
+        # self.content['destructor'].config(image=self.content['destructor'].img)
         self.content['destructor'].grid(column=0,row=0)
         self.content['destructor']["command"] = self.remove
 
@@ -158,7 +159,10 @@ class MyFrame(tk.Frame):
     def resize(self):
         if len(self.content) > 0:
             for key, val in self.content.items():
-                val.configure(font=self.master.ft)
+                try:
+                    val.configure(font=self.master.ft)
+                except:
+                    pass
         self.addchoice.configure(font=self.master.ft)
         for c in self.choices:
             c.button.configure(font=self.master.ft)
@@ -269,15 +273,19 @@ class App(tk.Tk):
     def menu_init(self):
         self.menubar = tk.Menu()
         self.config(menu=self.menubar)
-        self.menubar.add_command(label='save',command=self.save_file)
-        self.menubar.add_command(label='load',command=self.open_file, accelerator="Ctrl+O")
+        self.file_bar = tk.Menu(self.menubar)
+        self.file_bar.add_command(label='save',command=self.save_file, accelerator="Ctrl+S")
+        self.file_bar.add_command(label='load',command=self.open_file, accelerator="Ctrl+O")
+        self.file_bar.add_command(label='export',command=self.export_file, accelerator="Ctrl+E")
+        self.file_bar.add_command(label='import',command=self.import_file, accelerator="Ctrl+I")
+        self.menubar.add_cascade(label = 'File ⬇', menu=self.file_bar, underline = 0)
         self.menubar.add_command(label='hide/show arrows',command=self.show_arrows)
         self.menubar.add_command(label='new phrase',command=self.AddFrame)
 
         self.font_bar = tk.Menu(self.menubar)
         self.font_bar.add_command(label='+', command=self.font_increase)
         self.font_bar.add_command(label='-', command=self.font_decrease)
-        self.menubar.add_cascade(label = 'Font', menu=self.font_bar, underline = 0)
+        self.menubar.add_cascade(label = 'Font ⬇', menu=self.font_bar, underline = 0)
         # self.font_bar.add_cascade(label='Fonts...', menu=self.fonts_choice_bar)
 
         # self.fonts_choice_bar = tk.Menu(self.font_bar)
@@ -375,6 +383,10 @@ class App(tk.Tk):
     def open_file(self, event=None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.askopenfilename(filetypes=filetypes)
+    def export_file(self, event = None):
+        pass
+    def import_file(self, event = None):
+        pass
     def line_pressed(self, e):
         print("click")
     def drag_init(self, event):
@@ -473,7 +485,17 @@ class App(tk.Tk):
         x2 = w2.xpos+w2.winfo_width()//2
         y2 = w2.ypos
         # w2.winfo_
-        w1.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST))
+        # tmp=""
+        tmp=w1.choices[Choice].speech
+        tmp=tmp.replace('\n','')
+        tmp=tmp.replace(' ','')
+        if tmp != "":
+            dash=None
+            width=1
+        else:
+            width=3
+            dash=1
+        w1.arrows.append(self.canvas.create_line(x1, y1, x2, y2, arrow=tk.LAST, dash=dash,width=width))
 
                         
                 # if w != self.frames[-1]:
