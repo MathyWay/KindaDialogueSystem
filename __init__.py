@@ -1,3 +1,5 @@
+import os
+import json
 import tkinter as tk
 from enum import Enum
 # from tkinter import tix
@@ -64,6 +66,13 @@ class Choice:
         # master.master = States.Choice
 
         self.open_frame()
+    def pack_data(self):
+        data={}
+        # data.update(self.strvars)
+        for k,v in self.strvars.items():
+            data[k]=v.get()
+        data['speech']=self.speech
+        return data
     def open_frame(self):
         if self.frame == None:
             self.frame = ChoiceFrame(self)
@@ -123,9 +132,9 @@ class MyFrame(tk.Frame):
         ft = self.master.ft
         self.scale = 1#self.master.fontsize/10
         self.content = {}
-        self.stringvars = {}
+        self.strvars = {}
         # self.stringvars['speech'    ]=tk.StringVar
-        self.stringvars['orator'    ]=tk.StringVar
+        self.strvars['orator'    ]=tk.StringVar()
         # self.config(yscrollcommand = self.master.vscroll.set)
         # self.config(xscrollcommand = self.master.hscroll.set)
 
@@ -139,7 +148,7 @@ class MyFrame(tk.Frame):
         self.content['speech'    ].grid(column=1, row=1)
         self.content['orator_lb' ] = tk.Label(self, text="orator: ", font=ft)
         self.content['orator_lb' ].grid(column=0, row=2)
-        self.content['orator'    ] = tk.Entry(self, font=ft,width=EntryWidth,textvariable=self.stringvars['orator'])#int(10*scale))  
+        self.content['orator'    ] = tk.Entry(self, font=ft,width=EntryWidth,textvariable=self.strvars['orator'])#int(10*scale))  
         self.content['orator'    ].grid(column=1, row=2)
         self.content['destructor'] = tk.Button(self,font=ft,text='⨷')
         # self.content['destructor'].img=tk.PhotoImage(file='close.png',width=20,height=20)
@@ -156,6 +165,21 @@ class MyFrame(tk.Frame):
         self.add_choice_button()
 
         # self.create_line
+    def pack_data(self):
+        data={}
+        data['x']=self.xpos
+        data['y']=self.ypos
+        for k,v in self.strvars.items():
+            data[k]=v.get()
+        for k,v in self.content.items():
+            if isinstance(v, tk.Entry):
+                data[k]=v.get()
+            elif isinstance(v,sc):
+                data[k]=v.get('1.0', tk.END)
+        data['choices']={}
+        for c in self.choices:
+            data['choices'][c.strvars['id'].get()]=c.pack_data()
+        return data
     def resize(self):
         if len(self.content) > 0:
             for key, val in self.content.items():
@@ -258,8 +282,16 @@ class App(tk.Tk):
         # GButton_457["command"] = self.AddFrame
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
-            self.destroy()
-
+            self.destroy()    
+    def pack_data(self):
+        data={}
+        data['fontname']=self.fontname
+        data['fontsize']=self.fontsize
+        data['width']=self.width
+        data['height']=self.height
+        for f in self.frames:
+            data[f.id]=f.pack_data()
+        return data
     def makescroll(self, parent, thing):
         self.vscroll = tk.Scrollbar(parent, orient = tk.VERTICAL, command = thing.yview)
         self.vscroll.grid(row = 0, column = 1, sticky = tk.NS)
@@ -378,15 +410,26 @@ class App(tk.Tk):
         self.ft = tkFont.Font(family=self.fontname,size=self.fontsize)
         self.DrawFrames()
     def save_file(self, event = None):
-        filetypes = (('dialogues', '*.json'),('All files', '*.*'))
-        filename = fd.asksaveasfilename(filetypes=filetypes)
+        filetypes = (('dialogues', '*.kds'),('All files', '*.*'))
+        filename = fd.asksaveasfilename(filetypes=filetypes,defaultextension='.kds')
+        data=self.pack_data()
+        # file,ext = os.path.splitext(filename)
+        # if ext == '':
+        #     filename=file+'.kds'
+        # if os.path.isfile(filename):
+        #     if not mb.askokcancel('Rewrite',f"Ok to rewrite the file {filename}?"):
+        #         return
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data,f, indent='\t')
     def open_file(self, event=None):
-        filetypes = (('dialogues', '*.json'),('All files', '*.*'))
+        filetypes = (('dialogues', '*.kds'),('All files', '*.*'))
         filename = fd.askopenfilename(filetypes=filetypes)
     def export_file(self, event = None):
-        pass
+        filetypes = (('dialogues', '*.json'),('All files', '*.*'))
+        filename = fd.asksaveasfilename(filetypes=filetypes)
     def import_file(self, event = None):
-        pass
+        filetypes = (('dialogues', '*.json'),('All files', '*.*'))
+        filename = fd.askopenfilename(filetypes=filetypes)
     def line_pressed(self, e):
         print("click")
     def drag_init(self, event):
