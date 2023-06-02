@@ -24,21 +24,30 @@ class ChoiceFrame(tk.Toplevel):
         ft = master.ft
         self.content = {}
         self.content['label'] = tk.Label(
-            self, text="phrase "+master.master.id, font=ft).grid(column=1, row=2)
-        self.content['id_lb'] = tk.Label(self, text="name: ", font=ft).grid(column=0, row=2)
+            self, text="phrase "+master.master.id, font=ft)
+        self.content['label'].grid(column=1, row=1)
+        self.content['id_lb'] = tk.Label(self, text="name: ", font=ft)
+        self.content['id_lb'].grid(column=0, row=2)
         self.content['id'] = tk.Entry(
-            self, width=EntryWidth, textvariable=master.strvars['id'], font=ft).grid(column=1, row=2)  # int(10*scale))
-        self.content['speech_lb'] = tk.Label(self, text="speech: ", font=ft).grid(column=0, row=3)
+            self, width=EntryWidth, textvariable=master.strvars['id'], font=ft)  # int(10*scale))
+        self.content['id'].grid(column=1, row=2)
+        self.content['speech_lb'] = tk.Label(self, text="speech: ", font=ft)
+        self.content['speech_lb'].grid(column=0, row=3)
         self.content['speech'] = sc(
-            self, wrap=tk.WORD, height=3, width=EntryWidth, font=ft).insert(tk.INSERT, master.str['speech']).grid(column=1, row=3)  # int(10*scale))
-        self.content['to_lb'] = tk.Label(self, text="to: ", font=ft).grid(column=0, row=4)
+            self, wrap=tk.WORD, height=3, width=EntryWidth, font=ft)  # int(10*scale))
+        self.content['speech'].insert(tk.INSERT, master.str['speech'])
+        self.content['speech'].grid(column=1, row=3)
+        self.content['to_lb'] = tk.Label(self, text="to: ", font=ft)
+        self.content['to_lb'].grid(column=0, row=4)
         self.content['to'] = tk.Entry(
-            self, width=EntryWidth, textvariable=master.strvars['to'], font=ft).grid(column=1, row=4)  # int(10*scale))
+            self, width=EntryWidth, textvariable=master.strvars['to'], font=ft)  # int(10*scale))
+        self.content['to'].grid(column=1, row=4)
 
         # self.apply = tk.Button(self, font=ft)
         # self.apply.grid(column=0, row=5)
         # self.apply['text']='apply'
-        self.remove = tk.Button(self, font=ft).grid(column=0, row=5)
+        self.remove = tk.Button(self, font=ft)
+        self.remove.grid(column=0, row=5)
         self.remove['text'] = '-'
         self.remove['command'] = master.remove
 
