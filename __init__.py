@@ -27,7 +27,7 @@ class ChoiceFrame(tk.Toplevel):
         self.content['speech_lb' ] = tk.Label(self, text="speech: ", font = ft)
         self.content['speech_lb' ].grid(column=0, row=3)
         self.content['speech'    ] = sc(self, wrap=tk.WORD, height=3, width=EntryWidth, font = ft)#int(10*scale))
-        self.content['speech'    ].insert(tk.INSERT,master.speech)
+        self.content['speech'    ].insert(tk.INSERT,master.str['speech'])
         self.content['speech'    ].grid(column=1, row=3)
         self.content['to_lb'     ] = tk.Label(self, text="to: ", font = ft)
         self.content['to_lb'     ].grid(column=0, row=4)
@@ -54,7 +54,8 @@ class Choice:
         self.master=master
         self.ft=ft
         self.frame=None
-        self.speech = ""
+        self.str={}
+        self.str['speech'] = ""
         self.strvars={}
         self.strvars['id']=tk.StringVar()
         self.strvars['id'].set('...')
@@ -66,12 +67,29 @@ class Choice:
         # master.master = States.Choice
 
         self.open_frame()
+    def unpack_data(self, data:dict):
+        for k,v in data['ScrolledText'].items():
+            self.content[k].insert(tk.INSERT,v)
+        for k,v in data['strvars'].items():
+            self.strvars[k].set(v)
+        for k,v in data['str'].items():
+            self.str[k]=v
+        self.close_frame()
     def pack_data(self):
         data={}
         # data.update(self.strvars)
+        data['strvars']={}
         for k,v in self.strvars.items():
-            data[k]=v.get()
-        data['speech']=self.speech
+            if isinstance(v, tk.StringVar):
+                data['strvars'][k]=v.get()
+        data['ScrolledText']={}
+        for k,v in self.strvars.items():
+            if isinstance(v, sc):
+                data['ScrolledText'][k]=v.get("1.0", tk.END)
+        data['str']={}
+        for k,v in self.str.items():
+            if isinstance(v, str):
+                data['str'][k]=v
         return data
     def open_frame(self):
         if self.frame == None:
@@ -93,7 +111,7 @@ class Choice:
             self.master.choices.remove(self)
             self.master.master.DrawFrames()
     def check_choice(self):
-        self.speech = self.frame.content['speech'].get("1.0", tk.END)
+        self.str['speech'] = self.frame.content['speech'].get("1.0", tk.END)
         tostr = self.strvars['to'].get()
         to=None
         for w1 in self.master.master.frames:
@@ -159,23 +177,35 @@ class MyFrame(tk.Frame):
         self.content['addbutton' ] = tk.Button(self, font=ft)
         self.content['addbutton' ]['text'] = '+'
 
-        self.choices:tk.Button = []
+        self.choices = []
         self.addchoice = None
 
         self.add_choice_button()
 
         # self.create_line
+    def unpack_data(self, data:dict):
+        self.xpos=data['x']
+        self.ypos=data['y']
+        for k,v in data['strvars'].items():
+            self.strvars[k].set(v)
+        for k,v in data['ScrolledText'].items():
+            self.content[k].insert(tk.INSERT,v)
+        for k,v in data['choices'].items():
+            self.add_choice()
+            self.choices[-1].unpack_data(v)
     def pack_data(self):
         data={}
         data['x']=self.xpos
         data['y']=self.ypos
+        data['strvars']={}
         for k,v in self.strvars.items():
-            data[k]=v.get()
+            data['strvars'][k]=v.get()
+        data['ScrolledText']={}
         for k,v in self.content.items():
-            if isinstance(v, tk.Entry):
-                data[k]=v.get()
-            elif isinstance(v,sc):
-                data[k]=v.get('1.0', tk.END)
+            # if isinstance(v, tk.Entry):
+            #     data[k]=v.get()
+            if isinstance(v,sc):
+                data['ScrolledText'][k]=v.get('1.0', tk.END)
         data['choices']={}
         for c in self.choices:
             data['choices'][c.strvars['id'].get()]=c.pack_data()
@@ -282,16 +312,7 @@ class App(tk.Tk):
         # GButton_457["command"] = self.AddFrame
     def on_closing(self):
         if mb.askokcancel("Quit", "Do you want to quit?"):
-            self.destroy()    
-    def pack_data(self):
-        data={}
-        data['fontname']=self.fontname
-        data['fontsize']=self.fontsize
-        data['width']=self.width
-        data['height']=self.height
-        for f in self.frames:
-            data[f.id]=f.pack_data()
-        return data
+            self.destroy()
     def makescroll(self, parent, thing):
         self.vscroll = tk.Scrollbar(parent, orient = tk.VERTICAL, command = thing.yview)
         self.vscroll.grid(row = 0, column = 1, sticky = tk.NS)
@@ -420,10 +441,32 @@ class App(tk.Tk):
         #     if not mb.askokcancel('Rewrite',f"Ok to rewrite the file {filename}?"):
         #         return
         with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(data,f, indent='\t')
+            json.dump(data,f, indent='\t',ensure_ascii=False)
     def open_file(self, event=None):
         filetypes = (('dialogues', '*.kds'),('All files', '*.*'))
         filename = fd.askopenfilename(filetypes=filetypes)
+        with open (filename) as f:
+            data=json.load(f)
+        self.unpack_data(data)
+        self.DrawFrames()
+    def unpack_data(self, data:dict):
+        self.fontname = data['fontname']
+        self.fontsize = data['fontsize']
+        self.width    = data['width']      
+        self.height   = data['height']
+        for id,f in data['frames'].items():
+            self.frames.append(MyFrame(id, f['x'],f['y']))
+            self.frames[-1].unpack_data(f)
+    def pack_data(self):
+        data={}
+        data['fontname']=self.fontname
+        data['fontsize']=self.fontsize
+        data['width']   =self.width
+        data['height']  =self.height
+        data['frames'] = {}
+        for f in self.frames:
+            data['frames'][f.id]=f.pack_data()
+        return data
     def export_file(self, event = None):
         filetypes = (('dialogues', '*.json'),('All files', '*.*'))
         filename = fd.asksaveasfilename(filetypes=filetypes)
@@ -529,7 +572,7 @@ class App(tk.Tk):
         y2 = w2.ypos
         # w2.winfo_
         # tmp=""
-        tmp=w1.choices[Choice].speech
+        tmp=w1.choices[Choice].str['speech']
         tmp=tmp.replace('\n','')
         tmp=tmp.replace(' ','')
         if tmp != "":
