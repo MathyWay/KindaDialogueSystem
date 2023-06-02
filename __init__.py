@@ -23,25 +23,28 @@ class ChoiceFrame(tk.Toplevel):
         self.title(master.strvars['id'].get())
         ft = master.ft
         self.content = {}
+        maps = {'label'    : [1, 1], 
+                'id_lb'    : [0, 2],
+                'id'       : [1, 2],
+                'speech_lb': [0, 3],
+                'speech'   : [1, 3],
+                'to_lb'    : [0, 4],
+                'to'       : [1, 4]
+                }
         self.content['label'] = tk.Label(
             self, text="phrase "+master.master.id, font=ft)
-        self.content['label'].grid(column=1, row=1)
         self.content['id_lb'] = tk.Label(self, text="name: ", font=ft)
-        self.content['id_lb'].grid(column=0, row=2)
         self.content['id'] = tk.Entry(
             self, width=EntryWidth, textvariable=master.strvars['id'], font=ft)  # int(10*scale))
-        self.content['id'].grid(column=1, row=2)
         self.content['speech_lb'] = tk.Label(self, text="speech: ", font=ft)
-        self.content['speech_lb'].grid(column=0, row=3)
         self.content['speech'] = sc(
             self, wrap=tk.WORD, height=3, width=EntryWidth, font=ft)  # int(10*scale))
         self.content['speech'].insert(tk.INSERT, master.str['speech'])
-        self.content['speech'].grid(column=1, row=3)
         self.content['to_lb'] = tk.Label(self, text="to: ", font=ft)
-        self.content['to_lb'].grid(column=0, row=4)
         self.content['to'] = tk.Entry(
             self, width=EntryWidth, textvariable=master.strvars['to'], font=ft)  # int(10*scale))
-        self.content['to'].grid(column=1, row=4)
+        for q in maps:
+            self.content[q].grid(column=maps[q][0], row=maps[q][1])
 
         # self.apply = tk.Button(self, font=ft)
         # self.apply.grid(column=0, row=5)
