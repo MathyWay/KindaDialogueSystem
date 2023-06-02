@@ -23,24 +23,25 @@ class ChoiceFrame(tk.Toplevel):
         self.title(master.strvars['id'].get())
         ft = master.ft
         self.content = {}
-        mapGrid = {'label'    : [1, 1], 
-                'id_lb'    : [0, 2],
-                'id'       : [1, 2],
-                'speech_lb': [0, 3],
-                'speech'   : [1, 3],
-                'to_lb'    : [0, 4],
-                'to'       : [1, 4]
-                }
-        mapLabel ={'label': "phrase: "+master.master.id,
-                'id_lb': "name: ",
-                'speech_lb': "speech: ",
-                'to_lb': "to: "
-                }
-        mapEntry =['id', 'to']
+        mapGrid = {'label': [1, 1],
+                   'id_lb': [0, 2],
+                   'id': [1, 2],
+                   'speech_lb': [0, 3],
+                   'speech': [1, 3],
+                   'to_lb': [0, 4],
+                   'to': [1, 4]
+                   }
+        mapLabel = {'label': "phrase: "+master.master.id,
+                    'id_lb': "name: ",
+                    'speech_lb': "speech: ",
+                    'to_lb': "to: "
+                    }
+        mapEntry = ['id', 'to']
         for q in mapLabel:
             self.content[q] = tk.Label(self, text=mapLabel[q], font=ft)
         for q in mapEntry:
-            self.content[q] = tk.Entry(self, width=EntryWidth, textvariable=master.strvars[q], font=ft, )
+            self.content[q] = tk.Entry(
+                self, width=EntryWidth, textvariable=master.strvars[q], font=ft, )
         self.content['speech'] = sc(
             self, wrap=tk.WORD, height=3, width=EntryWidth, font=ft)  # int(10*scale))
         self.content['speech'].insert(tk.INSERT, master.str['speech'])
